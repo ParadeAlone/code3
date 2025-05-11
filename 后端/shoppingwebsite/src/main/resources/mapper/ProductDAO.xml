@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.it.dao.ProductDAO">
+    <!-- 结果集 -->
+    <resultMap type="com.it.entity.Product" id="ProductMap">
+        <result property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="filename" column="filename"/>
+        <result property="categoryid1" column="categoryid1"/>
+        <result property="categoryid2" column="categoryid2"/>
+        <result property="content" column="content"/>
+        <result property="price" column="price"/>
+        <result property="issj" column="issj"/>
+        <result property="tprice" column="tprice"/>
+        <result property="sellerid" column="sellerid"/>
+        <result property="audit" column="audit"/>
+
+
+    </resultMap>
+
+    <!-- 基本字段 -->
+    <sql id="Base_Column_List">
+        *
+    </sql>
+
+    <!-- 查询单个 -->
+    <select id="selectById" resultMap="ProductMap">
+        select
+        p1.*,
+        c1.name as categoryName1,
+        c2.name as categoryName2,
+        u1.tname as sellerName,
+        ROUND(ifnull(
+        ifnull((select sum(c1.score) from comment c1 where c1.productid = p1.id),0)
+        /
+        ifnull((select count(0) from comment c2 where c2.productid = p1.id),0),0
+        ),1) as average,
+        ifnull((ifnull((select sum(i1.num) from inventory i1 where i1.productid = p1.id and i1.flag='in'),0) -
+        ifnull((select sum(i2.num) from inventory i2 where i2.productid = p1.id and i2.flag='out'),0)
+        ),0) as stockNum,
+        ifnull((select sum(t1.num) from t_detail t1 where t1.productid = p1.id and t1.status ='交易完成'
+        ),0) as saleNum
+        from product p1
+        left join category c1 ON p1.categoryid1 = c1.id
+        left join category c2 ON p1.categoryid2 = c2.id
+        left join user u1 on u1.id = p1.sellerid
+
+        where p1.id = #{id}
+    </select>
+
+    <!-- 查询全部 -->
+    <select id="selectAll" resultMap="ProductMap">
+        select
+        <include refid="Base_Column_List"/>
+        from product
+        order by id desc
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="selectList" resultMap="ProductMap">
+        select
+        p1.*,
+        c1.name as categoryName1,
+        c2.name as categoryName2,
+        u1.tname as sellerName,
+        ifnull((ifnull((select sum(i1.num) from inventory i1 where i1.productid = p1.id and i1.flag='in'),0) -
+        ifnull((select sum(i2.num) from inventory i2 where i2.productid = p1.id and i2.flag='out'),0)
+        ),0) as stockNum,
+        ifnull((select sum(t1.num) from t_detail t1 where t1.productid = p1.id and t1.status ='交易完成'
+        <if test="stime!=null and stime!=''">
+            and t1.savetime <![CDATA[ >= ]]> #{stime}
+        </if>
+        <if test="etime!=null and etime!=''">
+            and t1.savetime <![CDATA[ < ]]> #{etime}
+        </if>
+        ),0) as saleNum
+        from product p1
+        left join category c1 ON p1.categoryid1 = c1.id
+        left join category c2 ON p1.categoryid2 = c2.id
+        left join user u1 on u1.id = p1.sellerid
+        <where>
+            <if test="key!=null and key!=''">
+                and p1.name like "%"#{key}"%"
+            </if>
+            <if test="id != null">
+                and p1.id = #{id}
+            </if>
+            <if test="name != null and name != ''">
+                and p1.name = #{name}
+            </if>
+            <if test="filename != null and filename != ''">
+                and p1.filename = #{filename}
+            </if>
+            <if test="categoryid1 != null">
+                and p1.categoryid1 = #{categoryid1}
+            </if>
+            <if test="categoryid2 != null">
+                and p1.categoryid2 = #{categoryid2}
+            </if>
+            <if test="content != null and content != ''">
+                and p1.content = #{content}
+            </if>
+            <if test="issj != null and issj != ''">
+                and p1.issj = #{issj}
+            </if>
+            <if test="sellerid != null">
+                and p1.sellerid = #{sellerid}
+            </if>
+            <if test="audit != null and audit != ''">
+                and p1.audit = #{audit}
+            </if>
+
+
+            <if test="minPrice != null">
+                and p1.price <![CDATA[ >= ]]> #{minPrice}
+            </if>
+
+            <if test="maxPrice != null">
+                and p1.price <![CDATA[ < ]]> #{maxPrice}
+            </if>
+        </where>
+        <choose>
+            <when test="sortBy!=null and sortBy!='' and sortBy=='saleNum'">
+                order by #{sortBy} desc
+            </when>
+            <otherwise>
+                order by p1.id desc
+            </otherwise>
+        </choose>
+    </select>
+
+    <!-- 新增所有列 -->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into product(id, name, filename, categoryid1, categoryid2, content, price,issj, tprice, sellerid, audit)
+        values ( #{id}, #{name}, #{filename}, #{categoryid1}, #{categoryid2},#{content}, #{price}, #{issj}, #{tprice}, #{sellerid}, #{audit})
+    </insert>
+
+    <!-- 批量新增 -->
+    <insert id="batchInsert">
+        insert into product(id, name, filename, categoryid1, categoryid2,content)
+        values
+        <foreach collection="products" item="item" index="index" separator=",">
+            (
+            #{item.id}, #{item.name}, #{item.filename}, #{item.categoryid1}, #{item.categoryid2}, #{item.content} )
+        </foreach>
+    </insert>
+
+    <!-- 通过主键修改数据 -->
+    <update id="update">
+        update shoppingwebsite_db.product
+        <set>
+            <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+            <if test="filename != null and filename != ''">
+                filename = #{filename},
+            </if>
+            <if test="categoryid1 != null">
+                categoryid1 = #{categoryid1},
+            </if>
+            <if test="categoryid2 != null">
+                categoryid2 = #{categoryid2},
+            </if>
+            <if test="content != null and content != ''">
+                content = #{content},
+            </if>
+            <if test="price != null">
+                price = #{price},
+            </if>
+            <if test="issj != null and issj != ''">
+                issj = #{issj},
+            </if>
+            <if test="tprice != null">
+                tprice = #{tprice},
+            </if>
+            <if test="sellerid != null">
+                sellerid = #{sellerid},
+            </if>
+            <if test="audit != null and audit != ''">
+                audit = #{audit},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from product where id = #{id}
+    </delete>
+
+    <!-- 总数 -->
+    <select id="count" resultType="int">
+        select count(*) from product
+    </select>
+</mapper>

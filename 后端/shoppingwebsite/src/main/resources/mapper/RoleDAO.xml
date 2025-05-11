@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.it.dao.RoleDAO">
+    <!-- 结果集 -->
+    <resultMap type="com.it.entity.Role" id="RoleMap">
+        <result property="id" column="id"/>
+        <result property="name" column="name"/>
+    </resultMap>
+
+    <!-- 基本字段 -->
+    <sql id="Base_Column_List">
+        *
+    </sql>
+
+    <!-- 查询单个 -->
+    <select id="selectById" resultMap="RoleMap">
+        select
+        <include refid="Base_Column_List"/>
+        from role
+        where id = #{id}
+    </select>
+
+    <!-- 查询全部 -->
+    <select id="selectAll" resultMap="RoleMap">
+        select
+        <include refid="Base_Column_List"/>
+        from role
+        order by id desc
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="selectList" resultMap="RoleMap">
+        select
+        <include refid="Base_Column_List"/>
+        from role
+        <where>
+            <if test="key!=null and key!=''">
+                and name like "%"#{key}"%"
+            </if>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="name != null and name != ''">
+                and name = #{name}
+            </if>
+            <if test="notRoleId != null and notRoleId != ''">
+                and id != #{notRoleId}
+            </if>
+        </where>
+        order by id desc
+    </select>
+
+    <!-- 新增所有列 -->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into role(id, name)
+        values ( #{id}, #{name})
+    </insert>
+
+    <!-- 批量新增 -->
+    <insert id="batchInsert">
+        insert into role(id, name)
+        values
+        <foreach collection="roles" item="item" index="index" separator=",">
+            (
+            #{item.id}, #{item.name} )
+        </foreach>
+    </insert>
+
+    <!-- 通过主键修改数据 -->
+    <update id="update">
+        update shoppingwebsite_db.role
+        <set>
+            <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from role where id = #{id}
+    </delete>
+
+    <!-- 总数 -->
+    <select id="count" resultType="int">
+        select count(*) from role
+    </select>
+</mapper>

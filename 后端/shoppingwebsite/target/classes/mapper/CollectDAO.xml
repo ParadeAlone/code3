@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.it.dao.CollectDAO">
+    <!-- 结果集 -->
+    <resultMap type="com.it.entity.Collect" id="CollectMap">
+        <result property="id" column="id"/>
+        <result property="memberid" column="memberid"/>
+        <result property="productid" column="productid"/>
+    </resultMap>
+
+    <!-- 基本字段 -->
+    <sql id="Base_Column_List">
+        *
+    </sql>
+
+    <!-- 查询单个 -->
+    <select id="selectById" resultMap="CollectMap">
+        select
+        <include refid="Base_Column_List"/>
+        from collect
+        where id = #{id}
+    </select>
+
+    <!-- 查询全部 -->
+    <select id="selectAll" resultMap="CollectMap">
+        select
+        <include refid="Base_Column_List"/>
+        from collect
+        order by id desc
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="selectList" resultMap="CollectMap">
+        select
+        c1.*,
+        p1.name as productName,
+        p1.filename as filename,
+        p1.price as price,
+
+        ifnull((ifnull((select sum(i1.num) from inventory i1 where i1.productid = p1.id and i1.flag='in'),0) -
+        ifnull((select sum(i2.num) from inventory i2 where i2.productid = p1.id and i2.flag='out'),0)
+        ),0) as stockNum,
+
+        p1.tprice as tprice
+        from collect c1
+        left join product p1 on p1.id = c1.productid
+        <where>
+            <if test="key!=null and key!=''">
+                and c1.name like "%"#{key}"%"
+            </if>
+            <if test="id != null">
+                and c1.id = #{id}
+            </if>
+            <if test="memberid != null">
+                and c1.memberid = #{memberid}
+            </if>
+            <if test="productid != null">
+                and c1.productid = #{productid}
+            </if>
+        </where>
+
+        order by c1.id desc
+    </select>
+
+    <!-- 新增所有列 -->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into collect(id, memberid, productid)
+        values ( #{id}, #{memberid}, #{productid})
+    </insert>
+
+    <!-- 批量新增 -->
+    <insert id="batchInsert">
+        insert into collect(id, memberid, productid)
+        values
+        <foreach collection="collects" item="item" index="index" separator=",">
+            (
+            #{item.id}, #{item.memberid}, #{item.productid} )
+        </foreach>
+    </insert>
+
+    <!-- 通过主键修改数据 -->
+    <update id="update">
+        update shoppingwebsite_db.collect
+        <set>
+            <if test="memberid != null">
+                memberid = #{memberid},
+            </if>
+            <if test="productid != null">
+                productid = #{productid},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from collect where id = #{id}
+    </delete>
+
+    <!-- 总数 -->
+    <select id="count" resultType="int">
+        select count(*) from collect
+    </select>
+</mapper>

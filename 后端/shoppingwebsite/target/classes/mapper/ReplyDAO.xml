@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.it.dao.ReplyDAO">
+    <!-- 结果集 -->
+    <resultMap type="com.it.entity.Reply" id="ReplyMap">
+        <result property="id" column="id"/>
+        <result property="memberid" column="memberid"/>
+        <result property="commentid" column="commentid"/>
+        <result property="content" column="content"/>
+        <result property="savetime" column="savetime"/>
+    </resultMap>
+
+    <!-- 基本字段 -->
+    <sql id="Base_Column_List">
+        *
+    </sql>
+
+    <!-- 查询单个 -->
+    <select id="selectById" resultMap="ReplyMap">
+        select
+        <include refid="Base_Column_List"/>
+        from reply
+        where id = #{id}
+    </select>
+
+    <!-- 查询全部 -->
+    <select id="selectAll" resultMap="ReplyMap">
+        select
+        <include refid="Base_Column_List"/>
+        from reply
+        order by id desc
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="selectList" resultMap="ReplyMap">
+        select
+        r1.*,
+        m1.tname as memberName,
+        m1.filename as filename
+        from reply r1
+        left join member m1 on m1.id = r1.memberid
+        <where>
+            <if test="key!=null and key!=''">
+                and r1.name like "%"#{key}"%"
+            </if>
+            <if test="id != null">
+                and r1.id = #{id}
+            </if>
+            <if test="memberid != null">
+                and r1.memberid = #{memberid}
+            </if>
+            <if test="commentid != null">
+                and r1.commentid = #{commentid}
+            </if>
+            <if test="content != null and content != ''">
+                and r1.content = #{content}
+            </if>
+            <if test="savetime != null and savetime != ''">
+                and r1.savetime = #{savetime}
+            </if>
+        </where>
+        order by r1.id desc
+    </select>
+
+    <!-- 新增所有列 -->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into reply(id, memberid, commentid, content, savetime)
+        values ( #{id}, #{memberid}, #{commentid}, #{content}, #{savetime})
+    </insert>
+
+    <!-- 批量新增 -->
+    <insert id="batchInsert">
+        insert into reply(id, memberid, commentid, content, savetime)
+        values
+        <foreach collection="replys" item="item" index="index" separator=",">
+            (
+            #{item.id}, #{item.memberid}, #{item.commentid}, #{item.content}, #{item.savetime} )
+        </foreach>
+    </insert>
+
+    <!-- 通过主键修改数据 -->
+    <update id="update">
+        update shoppingwebsite_db.reply
+        <set>
+            <if test="memberid != null">
+                memberid = #{memberid},
+            </if>
+            <if test="commentid != null">
+                commentid = #{commentid},
+            </if>
+            <if test="content != null and content != ''">
+                content = #{content},
+            </if>
+            <if test="savetime != null and savetime != ''">
+                savetime = #{savetime},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from reply where id = #{id}
+    </delete>
+
+    <!-- 总数 -->
+    <select id="count" resultType="int">
+        select count(*) from reply
+    </select>
+</mapper>

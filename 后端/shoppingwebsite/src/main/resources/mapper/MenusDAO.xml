@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.it.dao.MenusDAO">
+    <!-- 结果集 -->
+    <resultMap type="com.it.entity.Menus" id="MenusMap">
+        <result property="id" column="id"/>
+        <result property="serial" column="serial"/>
+        <result property="name" column="name"/>
+        <result property="icon" column="icon"/>
+        <result property="url" column="url"/>
+        <result property="upid" column="upid"/>
+        <result property="leaf" column="leaf"/>
+    </resultMap>
+
+    <!-- 基本字段 -->
+    <sql id="Base_Column_List">
+        *
+    </sql>
+
+    <!-- 查询单个 -->
+    <select id="selectById" resultMap="MenusMap">
+        select
+        <include refid="Base_Column_List"/>
+        from menus
+        where id = #{id}
+    </select>
+
+    <!-- 查询全部 -->
+    <select id="selectAll" resultMap="MenusMap">
+        select
+        <include refid="Base_Column_List"/>
+        from menus
+        order by id desc
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="selectList" resultMap="MenusMap">
+        select
+        <include refid="Base_Column_List"/>
+        from menus
+        <where>
+            <if test="key!=null and key!=''">
+                and name like "%"#{key}"%"
+            </if>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="serial != null">
+                and serial = #{serial}
+            </if>
+            <if test="name != null and name != ''">
+                and name = #{name}
+            </if>
+            <if test="icon != null and icon != ''">
+                and icon = #{icon}
+            </if>
+            <if test="url != null and url != ''">
+                and url = #{url}
+            </if>
+            <if test="upid != null">
+                and upid = #{upid}
+            </if>
+            <if test="leaf != null">
+                and leaf = #{leaf}
+            </if>
+        </where>
+        <choose>
+            <when test="sortBy!=null and sortBy!='' and sortBy=='serial'">
+                order by serial asc
+            </when>
+            <otherwise>
+                order by id asc
+            </otherwise>
+        </choose>
+    </select>
+
+    <!-- 新增所有列 -->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into menus(id, serial, name, icon, url, upid, leaf)
+        values ( #{id}, #{serial}, #{name}, #{icon}, #{url}, #{upid}, #{leaf})
+    </insert>
+
+    <!-- 批量新增 -->
+    <insert id="batchInsert">
+        insert into menus(id, serial, name, icon, url, upid, leaf)
+        values
+        <foreach collection="menuss" item="item" index="index" separator=",">
+            (
+            #{item.id}, #{item.serial}, #{item.name}, #{item.icon}, #{item.url}, #{item.upid}, #{item.leaf} )
+        </foreach>
+    </insert>
+
+    <!-- 通过主键修改数据 -->
+    <update id="update">
+        update shoppingwebsite_db.menus
+        <set>
+            <if test="serial != null">
+                serial = #{serial},
+            </if>
+            <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+            <if test="icon != null and icon != ''">
+                icon = #{icon},
+            </if>
+            <if test="url != null and url != ''">
+                url = #{url},
+            </if>
+            <if test="upid != null">
+                upid = #{upid},
+            </if>
+            <if test="leaf != null">
+                leaf = #{leaf},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from menus where id = #{id}
+    </delete>
+
+    <!-- 总数 -->
+    <select id="count" resultType="int">
+        select count(*) from menus
+    </select>
+</mapper>

@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.it.dao.TOrderDAO">
+    <!-- 结果集 -->
+    <resultMap type="com.it.entity.TOrder" id="TOrderMap">
+        <result property="id" column="id"/>
+        <result property="ddno" column="ddno"/>
+        <result property="memberid" column="memberid"/>
+        <result property="productInfo" column="product_info"/>
+        <result property="total" column="total"/>
+        <result property="savetime" column="savetime"/>
+        <result property="status" column="status"/>
+        <result property="address" column="address"/>
+        <result property="sellerid" column="sellerid"/>
+
+    </resultMap>
+
+    <!-- 基本字段 -->
+    <sql id="Base_Column_List">
+        *
+    </sql>
+
+    <!-- 查询单个 -->
+    <select id="selectById" resultMap="TOrderMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_order
+        where id = #{id}
+    </select>
+
+    <!-- 查询全部 -->
+    <select id="selectAll" resultMap="TOrderMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_order
+        order by id desc
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="selectList" resultMap="TOrderMap">
+        select
+        t1.*,
+        u1.tname as sellerName
+        from t_order t1
+        left join user u1 on u1.id = t1.sellerid
+        <where>
+            <if test="key!=null and key!=''">
+                and t1.ddno like "%"#{key}"%"
+            </if>
+            <if test="id != null">
+                and t1.id = #{id}
+            </if>
+            <if test="ddno != null and ddno != ''">
+                and t1.ddno = #{ddno}
+            </if>
+            <if test="memberid != null">
+                and t1.memberid = #{memberid}
+            </if>
+            <if test="productInfo != null and productInfo != ''">
+                and t1.product_info = #{productInfo}
+            </if>
+            <if test="total != null">
+                and t1.total = #{total}
+            </if>
+            <if test="savetime != null and savetime != ''">
+                and t1.savetime = #{savetime}
+            </if>
+            <if test="status != null and status != ''">
+                and t1.status = #{status}
+            </if>
+            <if test="sellerid != null">
+                and t1.sellerid = #{sellerid}
+            </if>
+
+        </where>
+        order by t1.id desc
+    </select>
+
+    <!-- 新增所有列 -->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into t_order(id, ddno, memberid, product_info, total, savetime, status,address,sellerid)
+        values ( #{id}, #{ddno}, #{memberid}, #{productInfo}, #{total}, #{savetime}, #{status},#{address},#{sellerid})
+    </insert>
+
+    <!-- 批量新增 -->
+    <insert id="batchInsert">
+        insert into t_order(id, ddno, memberid, product_info, total, savetime, status)
+        values
+        <foreach collection="tOrders" item="item" index="index" separator=",">
+            (
+            #{item.id}, #{item.ddno}, #{item.memberid}, #{item.productInfo}, #{item.total}, #{item.savetime},
+            #{item.status})
+        </foreach>
+    </insert>
+
+    <!-- 通过主键修改数据 -->
+    <update id="update">
+        update shoppingwebsite_db.t_order
+        <set>
+            <if test="ddno != null and ddno != ''">
+                ddno = #{ddno},
+            </if>
+            <if test="memberid != null">
+                memberid = #{memberid},
+            </if>
+            <if test="productInfo != null and productInfo != ''">
+                product_info = #{productInfo},
+            </if>
+            <if test="total != null">
+                total = #{total},
+            </if>
+            <if test="savetime != null and savetime != ''">
+                savetime = #{savetime},
+            </if>
+            <if test="status != null and status != ''">
+                status = #{status},
+            </if>
+            <if test="address != null and address != ''">
+                address = #{address},
+            </if>
+            <if test="sellerid != null">
+                sellerid = #{sellerid},
+            </if>
+
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from t_order where id = #{id}
+    </delete>
+
+    <!-- 总数 -->
+    <select id="count" resultType="int">
+        select count(*) from t_order
+    </select>
+
+    <select id="selectSellerMoney" resultMap="TOrderMap">
+        select date_format(savetime,'%Y-%m-%d') as savetime,sum(total) as total from t_order
+        <where>
+            <if test="memberid != null">
+                and memberid = #{memberid}
+            </if>
+            <if test="status != null and status !=''">
+                and status = #{status}
+            </if>
+            <if test="sellerid != null">
+                and sellerid = #{sellerid}
+            </if>
+
+            <if test="stime != null and stime != ''">
+                and date_format(savetime,'%Y-%m-%d') <![CDATA[ >= ]]> #{stime}
+            </if>
+            <if test="etime != null and etime != ''">
+                and date_format(savetime,'%Y-%m-%d') <![CDATA[ < ]]> #{etime}
+            </if>
+        </where>
+        GROUP by date_format(savetime,'%Y-%m-%d')
+    </select>
+</mapper>
